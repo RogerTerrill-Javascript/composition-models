@@ -11,6 +11,9 @@ export class Payload {
 export class SBK {
   campaigns: any = {};
   creatives: any = {};
+  landingPages: any = {};
+  keywords: any = {};
+  negativeKeywords: any = {};
   constructor(workbook) {
     this.campaigns = workbook[0].map(
       (campaign: { [key: string]: string }) => new Campaign(campaign)
@@ -18,22 +21,9 @@ export class SBK {
     this.creatives = workbook[1].map(
       (creative: { [key: string]: string }) => new Creative(creative)
     );
-  }
-}
-
-export class Creative {
-  attributes: { [key: string]: any } = {};
-
-  constructor(creative: { [key: string]: string }) {
-    this.attributes = new Attributes(creative, this.constructor.prototype);
-  }
-
-  columns() {
-    return ['CampaignName', 'BrandName', 'BrandLogo', 'Headline', 'Asins'];
-  }
-
-  setAsinsAttribute(values: string) {
-    return values.split(',').map((value) => value.trim());
+    this.landingPages = workbook[2].map(
+      (landingPage: { [key: string]: string }) => new LandingPage(landingPage)
+    );
   }
 }
 
@@ -66,6 +56,54 @@ export class Campaign {
 
   setBidOptimizationAttribute(value: string) {
     return value === 'true';
+  }
+}
+
+export class Creative {
+  attributes: { [key: string]: any } = {};
+
+  constructor(creative: { [key: string]: string }) {
+    this.attributes = new Attributes(creative, this.constructor.prototype);
+  }
+
+  columns() {
+    return ['CampaignName', 'BrandName', 'BrandLogo', 'Headline', 'Asins'];
+  }
+
+  setAsinsAttribute(values: string) {
+    return values.split(',').map((value) => value.trim());
+  }
+}
+
+export class LandingPage {
+  attributes: { [key: string]: any } = {};
+
+  constructor(landingPage: { [key: string]: string }) {
+    this.attributes = new Attributes(landingPage, this.constructor.prototype);
+  }
+
+  columns() {
+    return ['CampaignName', 'Asins', 'Url'];
+  }
+
+  setAsinsAttribute(values: string) {
+    return values.split(',').map((value) => value.trim());
+  }
+}
+
+export class Keyword {
+  attributes: { [key: string]: any } = {};
+
+  constructor(keyword: { [key: string]: string }) {
+    this.attributes = new Attributes(keyword, this.constructor.prototype);
+  }
+
+  columns() {
+    return ['CampaignName', 'Asins', 'Url'];
+  }
+
+  setAsinsAttribute(values: string) {
+    return values.split(',').map((value) => value.trim());
   }
 }
 
