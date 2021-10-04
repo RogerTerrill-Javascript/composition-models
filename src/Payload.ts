@@ -1,24 +1,35 @@
-export interface PayloadType {}
-
 // Has Entity Type ie SBK
 export class Payload {
   payload: any;
-  constructor(workbook: { [key: string]: string }[][]) {
+  constructor(workbook: { [key: string]: string }[][], sheetnames: string[]) {
+    const sbType = sheetnames[0].split('_')[0];
     this.payload = new SBK(workbook);
   }
+}
+
+enum SBKSheet {
+  SBK_Campaigns,
+  SBK_Creatives,
+  SBK_LandingPages,
+  SBK_Keywords,
+  SBK_NegativeKeywords
 }
 
 export class SBK {
   campaigns: any = {};
 
   constructor(workbook: { [key: string]: string }[][]) {
-    this.campaigns = workbook[0].map(
+    this.campaigns = workbook[SBKSheet.SBK_Campaigns].map(
       (campaign: { [key: string]: string }) =>
         new Campaign(campaign, {
           workbook,
         })
     );
   }
+}
+
+export class Entity {
+  attributes: {[key:string]: any} = {};
 }
 
 export class Campaign {
@@ -32,19 +43,19 @@ export class Campaign {
     this.attributes = new Attributes(campaign, {
       context: this.constructor.prototype,
     });
-    this.creative = new Creative(options.workbook[1], {
-      primaryKey: this.attributes.attributes.Name,
+    this.creative = new Creative(options.workbook[SBKSheet.SBK_Creatives], {
+      primaryKey: this.getAttribute('Name'),
     });
-    this.landingPage = new LandingPage(options.workbook[2], {
-      primaryKey: this.attributes.attributes.Name,
-    });
-    // @ts-ignore
-    this.keywords = new Keyword(options.workbook[3], {
-      primaryKey: this.attributes.attributes.Name,
+    this.landingPage = new LandingPage(options.workbook[SBKSheet.SBK_LandingPages], {
+      primaryKey: this.getAttribute('Name'),
     });
     // @ts-ignore
-    this.negativeKeywords = new NegativeKeyword(options.workbook[4], {
-      primaryKey: this.attributes.attributes.Name,
+    this.keywords = new Keyword(options.workbook[SBKSheet.SBK_Keywords], {
+      primaryKey: this.getAttribute('Name'),
+    });
+    // @ts-ignore
+    this.negativeKeywords = new NegativeKeyword(options.workbook[SBKSheet.SBK_NegativeKeywords], {
+      primaryKey: this.getAttribute('Name'),
     });
   }
 
@@ -71,6 +82,15 @@ export class Campaign {
   setBidOptimizationAttribute(value: string) {
     return value === 'true';
   }
+
+  getAttribute(name: string) {
+    return this.attributes.getProperty(name);
+  }
+
+  getProperties() {
+    return this.attributes.getProperties();
+  }
+
 }
 
 export class Creative {
@@ -198,5 +218,13 @@ export class Attributes {
     this.attributes[key] = mutator ? mutator(value) : value;
 
     return true;
+  }
+
+  getProperty(name:string) {
+    return this.attributes[name]
+  }
+
+  getProperties() {
+    return this.attributes;
   }
 }

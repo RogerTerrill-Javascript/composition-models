@@ -1,9 +1,9 @@
-import { WORKBOOK } from './demoWorkbook';
+import { WORKBOOK, SHEETNAMES } from './demoWorkbook';
 
-import { Payload } from './Payload';
+import { Payload } from './Payload_2';
 
 console.log(
   '*************************',
-  new Payload(WORKBOOK).payload.campaigns,
+  new Payload(WORKBOOK, SHEETNAMES),
   '*************************'
 );

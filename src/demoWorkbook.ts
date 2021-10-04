@@ -1,3 +1,10 @@
+export const SHEETNAMES = [
+  'SBK_Campaigns',
+  'SBK_Creatives',
+  'SBK_LandingPages',
+  'SBK_Keywords',
+  'SBK_NegativeKeywords',
+];
 export const WORKBOOK = [
   [
     {
