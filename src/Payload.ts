@@ -10,28 +10,42 @@ export class Payload {
 
 export class SBK {
   campaigns: any = {};
-  creatives: any = {};
-  landingPages: any = {};
-  keywords: any = {};
-  negativeKeywords: any = {};
-  constructor(workbook) {
+
+  constructor(workbook: { [key: string]: string }[][]) {
     this.campaigns = workbook[0].map(
-      (campaign: { [key: string]: string }) => new Campaign(campaign)
-    );
-    this.creatives = workbook[1].map(
-      (creative: { [key: string]: string }) => new Creative(creative)
-    );
-    this.landingPages = workbook[2].map(
-      (landingPage: { [key: string]: string }) => new LandingPage(landingPage)
+      (campaign: { [key: string]: string }) =>
+        new Campaign(campaign, {
+          workbook,
+        })
     );
   }
 }
 
 export class Campaign {
   attributes: { [key: string]: any } = {};
+  creative: any = {};
+  landingPage: any = {};
+  keywords: any = {};
+  negativeKeywords: any = {};
 
-  constructor(campaign: { [key: string]: string }) {
-    this.attributes = new Attributes(campaign, this.constructor.prototype);
+  constructor(campaign: any, options = { workbook: [[{}]] }) {
+    this.attributes = new Attributes(campaign, {
+      context: this.constructor.prototype,
+    });
+    this.creative = new Creative(options.workbook[1], {
+      primaryKey: this.attributes.attributes.Name,
+    });
+    this.landingPage = new LandingPage(options.workbook[2], {
+      primaryKey: this.attributes.attributes.Name,
+    });
+    // @ts-ignore
+    this.keywords = new Keyword(options.workbook[3], {
+      primaryKey: this.attributes.attributes.Name,
+    });
+    // @ts-ignore
+    this.negativeKeywords = new NegativeKeyword(options.workbook[4], {
+      primaryKey: this.attributes.attributes.Name,
+    });
   }
 
   columns() {
@@ -62,13 +76,24 @@ export class Campaign {
 export class Creative {
   attributes: { [key: string]: any } = {};
 
-  constructor(creative: { [key: string]: string }) {
-    this.attributes = new Attributes(creative, this.constructor.prototype);
+  constructor(
+    creatives: { [key: string]: string }[],
+    options = { primaryKey: 'Name' }
+  ) {
+    const _creative = creatives.filter((creative) => {
+      return creative.CampaignName === options.primaryKey;
+    })[0];
+
+    this.attributes = new Attributes(_creative, {
+      context: this.constructor.prototype,
+    });
   }
 
   columns() {
     return ['CampaignName', 'BrandName', 'BrandLogo', 'Headline', 'Asins'];
   }
+
+  filter(primaryKey: string, foreignKey: string) {}
 
   setAsinsAttribute(values: string) {
     return values.split(',').map((value) => value.trim());
@@ -78,8 +103,17 @@ export class Creative {
 export class LandingPage {
   attributes: { [key: string]: any } = {};
 
-  constructor(landingPage: { [key: string]: string }) {
-    this.attributes = new Attributes(landingPage, this.constructor.prototype);
+  constructor(
+    landingPages: { [key: string]: string }[],
+    options = { primaryKey: 'Name' }
+  ) {
+    const _landingPage = landingPages.filter((landingPage) => {
+      return landingPage.CampaignName === options.primaryKey;
+    })[0];
+
+    this.attributes = new Attributes(_landingPage, {
+      context: this.constructor.prototype,
+    });
   }
 
   columns() {
@@ -94,23 +128,64 @@ export class LandingPage {
 export class Keyword {
   attributes: { [key: string]: any } = {};
 
-  constructor(keyword: { [key: string]: string }) {
-    this.attributes = new Attributes(keyword, this.constructor.prototype);
+  constructor(
+    keywords: { [key: string]: string }[],
+    options = { foreignKey: '', primaryKey: '' }
+  ) {
+    const _keywords = keywords.filter((keyword) => {
+      return keyword.CampaignName === options.primaryKey;
+    });
+
+    this.attributes = _keywords.map(
+      (keyword) =>
+        new Attributes(keyword, { context: this.constructor.prototype })
+    );
   }
 
   columns() {
-    return ['CampaignName', 'Asins', 'Url'];
+    return [
+      'CampaignName',
+      'KeywordText',
+      'NativeLanguageKeyword',
+      'NativeLanguageLocale',
+      'MatchType',
+      'Bid',
+    ];
   }
 
-  setAsinsAttribute(values: string) {
-    return values.split(',').map((value) => value.trim());
+  setBidAttribute(value: string) {
+    return parseFloat(value);
+  }
+}
+
+export class NegativeKeyword {
+  attributes: { [key: string]: any } = {};
+
+  constructor(
+    negativeKeywords: { [key: string]: string }[],
+    options = { foreignKey: '', primaryKey: '' }
+  ) {
+    const _negativeKeywords = negativeKeywords.filter((negativeKeyword) => {
+      return negativeKeyword.CampaignName === options.primaryKey;
+    });
+
+    this.attributes = _negativeKeywords.map(
+      (negativeKeyword) =>
+        new Attributes(negativeKeyword, { context: this.constructor.prototype })
+    );
+  }
+
+  columns() {
+    return ['CampaignName', 'KeywordText', 'MatchType'];
   }
 }
 
 export class Attributes {
   attributes: any = {};
+  context: any;
 
-  constructor(attributes: any, public context: any) {
+  constructor(attributes: any, options = { context: null }) {
+    this.context = options.context;
     Object.entries(attributes).forEach(([key, value]) => {
       if (this.context.columns().includes(key)) {
         this.setAttribute(key, value);
