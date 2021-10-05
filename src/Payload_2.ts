@@ -1,14 +1,4 @@
-import { SHEETNAMES } from './demoWorkbook';
 import { lowercaseFirst } from './utils';
-
-export class Payload {
-  payload: any;
-
-  constructor(workbook: any, sheetNames: any) {
-    const SponsoredType = sheetNames[0].split('_')[0];
-    this.payload = new SBK(workbook, sheetNames);
-  }
-}
 
 class Schema {
   schema: any = {
@@ -35,12 +25,24 @@ class Schema {
           'BidMultiplier',
           'PortfolioId',
         ],
-        relations: [
-          'SBK_Creatives',
-          'SBK_LandingPages',
-          'SBK_Keywords',
-          'SBK_NegativeKeywords',
-        ],
+        relations: {
+          SBK_Creatives: {
+            propName: 'creative',
+            many: false,
+          },
+          SBK_LandingPages: {
+            propName: 'landingPage',
+            many: false,
+          },
+          SBK_Keywords: {
+            propName: 'keywords',
+            many: true,
+          },
+          SBK_NegativeKeywords: {
+            propName: 'negativeKeywords',
+            many: true,
+          },
+        },
         mutators: {
           setBudgetAttribute(value: string) {
             return parseFloat(value);
@@ -99,6 +101,111 @@ class Schema {
         mutators: {},
       },
     },
+    SBE: {
+      sheetNames: [
+        'SBE_Campaigns',
+        'SBE_Creatives',
+        'SBE_LandingPages',
+        'SBE_Targets',
+        'SBE_Expressions',
+        'SBE_NegativeTargets',
+      ],
+      Campaigns: {
+        primaryKey: 'name',
+        columns: [
+          'Name',
+          'Budget',
+          'BudgetType',
+          'StartDate',
+          'EndDate',
+          'AdFormat',
+          'State',
+          'BrandEntityId',
+          'BidOptimization',
+          'BidMultiplier',
+          'PortfolioId',
+        ],
+        relations: {
+          SBE_Creatives: {
+            propName: 'creative',
+            many: false,
+          },
+          SBE_LandingPages: {
+            propName: 'landingPage',
+            many: false,
+          },
+          SBE_Targets: {
+            propName: 'targets',
+            many: true,
+          },
+          SBE_NegativeTargets: {
+            propName: 'negativeTargets',
+            many: true,
+          },
+        },
+        mutators: {
+          setBudgetAttribute(value: string) {
+            return parseFloat(value);
+          },
+          setBidOptimizationAttribute(value: string) {
+            return value === 'true';
+          },
+          setBidMultiplierAttribute(value: string) {
+            return parseInt(value);
+          },
+        },
+      },
+      Creatives: {
+        foreignKey: 'campaignName',
+        columns: [
+          'CampaignName',
+          'BrandName',
+          'BrandLogoAssetID',
+          'Headline',
+          'Asins',
+        ],
+        mutators: {
+          setAsinsAttribute(values: string) {
+            return values.split(',').map((value) => value.trim());
+          },
+        },
+      },
+      LandingPages: {
+        foreignKey: 'campaignName',
+        columns: ['CampaignName', 'Asins', 'Url'],
+        mutators: {
+          setAsinsAttribute(values: string) {
+            return values.split(',').map((value) => value.trim());
+          },
+        },
+      },
+      Targets: {
+        primaryKey: 'Name',
+        foreignKey: 'campaignName',
+        columns: ['CampaignName', 'Name', 'Bid'],
+        relations: {
+          SBE_Expressions: {
+            propName: 'expressions',
+            many: true,
+          },
+        },
+        mutators: {
+          setBidAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      Expressions: {
+        foreignKey: 'targetName',
+        columns: ['CampaignName', 'Type', 'Value'],
+        mutators: {},
+      },
+      NegativeTargets: {
+        foreignKey: 'campaignName',
+        columns: ['CampaignName', 'Type', 'Value'],
+        mutators: {},
+      },
+    },
   };
 
   constructor(public sponsoredType: string) {}
@@ -113,6 +220,10 @@ class Schema {
 
   getForeignKey(entity: string) {
     return this.schema[this.sponsoredType][entity].foreignKey;
+  }
+
+  getRelations(entity: string) {
+    return this.schema[this.sponsoredType][entity].relations;
   }
 
   validateSheetNames(inputSheetNames: string[]) {
@@ -136,7 +247,7 @@ class Schema {
   }
 }
 
-enum SBKSheet {
+enum SBK {
   SBK_Campaigns,
   SBK_Creatives,
   SBK_LandingPages,
@@ -144,56 +255,56 @@ enum SBKSheet {
   SBK_NegativeKeywords,
 }
 
-class SBK {
-  campaigns: any = {};
-  creatives: any = {};
-  landingPages: any = {};
-  keywords: any = {};
-  negativeKeywords: any = {};
+enum SBE {
+  SBE_Campaigns,
+  SBE_Creatives,
+  SBE_LandingPages,
+  SBE_Targets,
+  SBE_Expressions,
+  SBE_NegativeTargets,
+}
 
-  constructor(workbook: any, sheetNames: string[]) {
-    const schema = new Schema('SBK');
+export class AmazonAdvertisingPayload {
+  constructor(workbook: any, public sheetNames: string[]) {
+    const type = this.sheetNames[0].split('_')[0];
+
+    const schema = new Schema(type);
     schema.validateSheetNames(sheetNames);
 
-    sheetNames.forEach((sheetName) => (this[sheetName] = {}));
+    this.sheetNames.forEach((sheetName) => (this[sheetName] = {}));
 
-    this.campaigns = workbook[SBKSheet.SBK_Campaigns].map(
-      (campaign: any) =>
-        new Entity(campaign, SBKSheet[SBKSheet.SBK_Campaigns], schema)
-    );
-    this.creatives = workbook[SBKSheet.SBK_Creatives].map(
-      (creative: any) =>
-        new Entity(creative, SBKSheet[SBKSheet.SBK_Creatives], schema)
-    );
-    this.landingPages = workbook[SBKSheet.SBK_LandingPages].map(
-      (landingPage: any) =>
-        new Entity(landingPage, SBKSheet[SBKSheet.SBK_LandingPages], schema)
-    );
-    this.keywords = workbook[SBKSheet.SBK_Keywords].map(
-      (keyword: any) =>
-        new Entity(keyword, SBKSheet[SBKSheet.SBK_Keywords], schema)
-    );
-    this.negativeKeywords = workbook[SBKSheet.SBK_NegativeKeywords].map(
-      (negativeKeyword: any) =>
-        new Entity(
-          negativeKeyword,
-          SBKSheet[SBKSheet.SBK_NegativeKeywords],
-          schema
-        )
+    this.sheetNames.forEach(
+      (sheetName) =>
+        (this[sheetName] = workbook[SBE[sheetName]].map(
+          (entity: any) => new Entity(entity, SBE[SBE[sheetName]], schema)
+        ))
     );
 
-    this.campaigns.forEach((campaign: any) => {
-      campaign.setRelationAttributes('creative', this.creatives);
-      campaign.setRelationAttributes('landingPage', this.landingPages);
-      campaign.setRelationAttributes('keywords', this.keywords, true);
-      campaign.setRelationAttributes(
-        'negativeKeywords',
-        this.negativeKeywords,
-        true
+    this[SBE['0']].forEach((rootEntity: any) => {
+      const relations = rootEntity.schema.getRelations(
+        rootEntity.currentEntity
       );
-    });
 
-    console.log(this.campaigns[0].getAttributes());
+      const relationKeys = Object.keys(relations);
+
+      relationKeys.forEach((relationKey: any) => {
+        rootEntity.setRelationAttributes(
+          relations[relationKey].propName,
+          this[relationKey],
+          relations[relationKey].many
+        );
+      });
+    });
+  }
+
+  getPayload() {
+    const rootSheet = this.sheetNames[0];
+    return this[rootSheet].map((campaign) => campaign.getAttributes());
+  }
+
+  stringifyPayload() {
+    const rootSheet = this.sheetNames[0];
+    this[rootSheet].map((campaign) => console.log(campaign.getAttributes()));
   }
 }
 
@@ -228,11 +339,11 @@ class Entity {
       return false;
     });
 
-    const filteredObj = many
+    this.attributes[key] = many
       ? filtered.map((obj) => obj.getAttributes())
       : filtered[0].getAttributes();
 
-    this.attributes[key] = filteredObj;
+    return this;
   }
 
   getAttributes() {

@@ -1,9 +1,14 @@
-import { WORKBOOK, SHEETNAMES } from './demoWorkbook';
+import {
+  SBE_SHEETNAMES,
+  SBE_WORKBOOK,
+  SBK_WORKBOOK,
+  SHEETNAMES,
+} from './demoWorkbook';
 
-import { Payload } from './Payload_2';
+import { AmazonAdvertisingPayload, Payload } from './Payload_2';
 
 console.log(
   '*************************',
-  new Payload(WORKBOOK, SHEETNAMES),
+  new AmazonAdvertisingPayload(SBE_WORKBOOK, SBE_SHEETNAMES).stringifyPayload(),
   '*************************'
 );
