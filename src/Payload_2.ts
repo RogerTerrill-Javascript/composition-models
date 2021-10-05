@@ -180,7 +180,8 @@ class Schema {
         },
       },
       Targets: {
-        primaryKey: 'Name',
+        primaryKey: 'name',
+        removePrimaryKey: true,
         foreignKey: 'campaignName',
         columns: ['CampaignName', 'Name', 'Bid'],
         relations: {
@@ -197,7 +198,7 @@ class Schema {
       },
       Expressions: {
         foreignKey: 'targetName',
-        columns: ['CampaignName', 'Type', 'Value'],
+        columns: ['TargetName', 'Type', 'Value'],
         mutators: {},
       },
       NegativeTargets: {
@@ -209,6 +210,10 @@ class Schema {
   };
 
   constructor(public sponsoredType: string) {}
+
+  getEntity(entity: string) {
+    return this.schema[this.sponsoredType][entity];
+  }
 
   getColumns(entity: string) {
     return this.schema[this.sponsoredType][entity].columns;
@@ -267,6 +272,7 @@ enum SBE {
 export class AmazonAdvertisingPayload {
   constructor(workbook: any, public sheetNames: string[]) {
     const type = this.sheetNames[0].split('_')[0];
+    const reverseSheetNames = [...this.sheetNames].reverse();
 
     const schema = new Schema(type);
     schema.validateSheetNames(sheetNames);
@@ -280,19 +286,25 @@ export class AmazonAdvertisingPayload {
         ))
     );
 
-    this[SBE['0']].forEach((rootEntity: any) => {
-      const relations = rootEntity.schema.getRelations(
-        rootEntity.currentEntity
-      );
+    console.log(this['SBE_Targets'][0].getAttributes());
 
-      const relationKeys = Object.keys(relations);
-
-      relationKeys.forEach((relationKey: any) => {
-        rootEntity.setRelationAttributes(
-          relations[relationKey].propName,
-          this[relationKey],
-          relations[relationKey].many
+    reverseSheetNames.forEach((sheetName: any) => {
+      this[sheetName].forEach((entityElement: any) => {
+        const relations = entityElement.schema.getRelations(
+          entityElement.currentEntity
         );
+
+        if (!relations) return;
+
+        const relationKeys = Object.keys(relations);
+
+        relationKeys.forEach((relationKey: any) => {
+          entityElement.setRelationAttributes(
+            relations[relationKey].propName,
+            this[relationKey],
+            relations[relationKey].many
+          );
+        });
       });
     });
   }
@@ -304,7 +316,9 @@ export class AmazonAdvertisingPayload {
 
   stringifyPayload() {
     const rootSheet = this.sheetNames[0];
-    this[rootSheet].map((campaign) => console.log(campaign.getAttributes()));
+    // this[rootSheet].map((campaign) => console.log(campaign.getAttributes()));
+    console.log('CAMPAIGN', this['SBE_Campaigns'][0].getAttributes());
+    // console.log('EXPRESSIONS', this['SBE_Expressions']);
   }
 }
 
@@ -326,13 +340,21 @@ class Entity {
     this.attributes[lowercaseFirst(key)] = mutator ? mutator(value) : value;
   }
 
-  setRelationAttributes(key: string, values: any[], many: false) {
+  setRelationAttributes(key: string, values: any[], many: boolean) {
     const filtered = values.filter((value: any) => {
-      const primaryKey = this.schema.getPrimaryKey(this.currentEntity);
-      const foreignKey = this.schema.getForeignKey(value.currentEntity);
+      this.schema.get;
+      const primaryKey = this.schema.getEntity(this.currentEntity).primaryKey;
+      const foreignKey = this.schema.getEntity(value.currentEntity).foreignKey;
+      const removePrimaryKey = this.schema.getEntity(
+        this.currentEntity
+      ).removePrimaryKey;
 
       if (this.attributes[primaryKey] === value.getAttributes()[foreignKey]) {
         value.removeAttribute(foreignKey);
+
+        if (removePrimaryKey) {
+          this.removeAttribute(primaryKey);
+        }
         return true;
       }
 

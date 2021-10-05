@@ -440,7 +440,7 @@ export const SBE_WORKBOOK = [
       rowIndex: 4,
       errorCount: 0,
     },
-  ],
+  ], // Campaigns
   [
     {
       CampaignName: 'Campaign1',
@@ -487,7 +487,7 @@ export const SBE_WORKBOOK = [
       rowIndex: 4,
       errorCount: 0,
     },
-  ],
+  ], // Creatives
   [
     {
       CampaignName: 'Campaign1',
@@ -524,7 +524,7 @@ export const SBE_WORKBOOK = [
       rowIndex: 4,
       errorCount: 0,
     },
-  ],
+  ], // Landing Pages
   [
     {
       CampaignName: 'Campaign1',
@@ -596,7 +596,7 @@ export const SBE_WORKBOOK = [
       rowIndex: 9,
       errorCount: 0,
     },
-  ],
+  ], // Targets
   [
     {
       TargetName: 'Target1',
@@ -794,7 +794,7 @@ export const SBE_WORKBOOK = [
       rowIndex: 27,
       errorCount: 0,
     },
-  ],
+  ], // Expressions
   [
     {
       CampaignName: 'Campaign1',
@@ -866,5 +866,5 @@ export const SBE_WORKBOOK = [
       rowIndex: 9,
       errorCount: 0,
     },
-  ],
+  ], // NegativeTargets
 ];
