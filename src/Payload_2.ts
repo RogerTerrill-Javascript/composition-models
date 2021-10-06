@@ -101,6 +101,80 @@ class Schema {
         mutators: {},
       },
     },
+    SBVK: {
+      sheetNames: [
+        'SBVK_Campaigns',
+        'SBVK_Creatives',
+        'SBVK_Keywords',
+        'SBVK_NegativeKeywords',
+      ],
+      Campaigns: {
+        primaryKey: 'name',
+        columns: [
+          'Name',
+          'Budget',
+          'BudgetType',
+          'StartDate',
+          'EndDate',
+          'AdFormat',
+          'State',
+          'BrandEntityId',
+          'PortfolioId',
+        ],
+        relations: {
+          SBVK_Creatives: {
+            propName: 'creative',
+            many: false,
+          },
+          SBVK_Keywords: {
+            propName: 'keywords',
+            many: true,
+          },
+          SBVK_NegativeKeywords: {
+            propName: 'negativeKeywords',
+            many: true,
+          },
+        },
+        mutators: {
+          setBudgetAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      Creatives: {
+        foreignKey: 'campaignName',
+        columns: ['CampaignName', 'Asins', 'VideoMediaIds', 'Type'],
+        mutators: {
+          setAsinsAttribute(values: string) {
+            return values.split(',').map((value) => value.trim());
+          },
+          setVideoMediaIdsAttribute(values: string) {
+            return values.split(',').map((value) => value.trim());
+          },
+        },
+      },
+      Keywords: {
+        foreignKey: 'campaignName',
+        columns: [
+          'CampaignName',
+          'KeywordText',
+          'NativeLanguageKeyword',
+          'NativeLanguageLocale',
+          'MatchType',
+          'Bid',
+        ],
+        mutators: {
+          setBidAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      NegativeKeywords: {
+        foreignKey: 'campaignName',
+        columns: ['CampaignName', 'KeywordText', 'MatchType'],
+        mutators: {},
+      },
+    },
     SBE: {
       sheetNames: [
         'SBE_Campaigns',
@@ -109,6 +183,7 @@ class Schema {
         'SBE_Targets',
         'SBE_Expressions',
         'SBE_NegativeTargets',
+        'SBE_NegativeExpressions',
       ],
       Campaigns: {
         primaryKey: 'name',
@@ -202,8 +277,239 @@ class Schema {
         mutators: {},
       },
       NegativeTargets: {
+        primaryKey: 'name',
+        removePrimaryKey: true,
         foreignKey: 'campaignName',
-        columns: ['CampaignName', 'Type', 'Value'],
+        columns: ['CampaignName', 'Name'],
+        relations: {
+          SBE_NegativeExpressions: {
+            propName: 'expressions',
+            many: true,
+          },
+        },
+        mutators: {},
+      },
+      NegativeExpressions: {
+        foreignKey: 'negativeTargetName',
+        columns: ['NegativeTargetName', 'Type', 'Value'],
+        mutators: {},
+      },
+    },
+    SBVE: {
+      sheetNames: [
+        'SBVE_Campaigns',
+        'SBVE_Creatives',
+        'SBVE_Targets',
+        'SBVE_Expressions',
+        'SBVE_NegativeTargets',
+        'SBVE_NegativeExpressions',
+      ],
+      Campaigns: {
+        primaryKey: 'name',
+        columns: [
+          'Name',
+          'Budget',
+          'BudgetType',
+          'StartDate',
+          'EndDate',
+          'AdFormat',
+          'State',
+          'BrandEntityId',
+          'PortfolioId',
+        ],
+        relations: {
+          SBVE_Creatives: {
+            propName: 'creative',
+            many: false,
+          },
+          SBVE_Targets: {
+            propName: 'targets',
+            many: true,
+          },
+          SBVE_NegativeTargets: {
+            propName: 'negativeTargets',
+            many: true,
+          },
+        },
+        mutators: {
+          setBudgetAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      Creatives: {
+        foreignKey: 'campaignName',
+        columns: ['CampaignName', 'Asins', 'VideoMediaIds', 'Type'],
+        mutators: {
+          setAsinsAttribute(values: string) {
+            return values.split(',').map((value) => value.trim());
+          },
+          setVideoMediaIdsAttribute(values: string) {
+            return values.split(',').map((value) => value.trim());
+          },
+        },
+      },
+      Targets: {
+        primaryKey: 'name',
+        removePrimaryKey: true,
+        foreignKey: 'campaignName',
+        columns: ['CampaignName', 'Name', 'Bid'],
+        relations: {
+          SBVE_Expressions: {
+            propName: 'expressions',
+            many: true,
+          },
+        },
+        mutators: {
+          setBidAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      Expressions: {
+        foreignKey: 'targetName',
+        columns: ['TargetName', 'Type', 'Value'],
+        mutators: {},
+      },
+      NegativeTargets: {
+        primaryKey: 'name',
+        removePrimaryKey: true,
+        foreignKey: 'campaignName',
+        columns: ['CampaignName', 'Name'],
+        relations: {
+          SBVE_NegativeExpressions: {
+            propName: 'expressions',
+            many: true,
+          },
+        },
+        mutators: {},
+      },
+      NegativeExpressions: {
+        foreignKey: 'negativeTargetName',
+        columns: ['NegativeTargetName', 'Type', 'Value'],
+        mutators: {},
+      },
+    },
+    SD: {
+      sheetNames: [
+        'SD_Campaigns',
+        'SD_AdGroups',
+        'SD_ProductAds',
+        'SD_Targetings',
+        'SD_Expressions',
+        'SD_ExpressionsNested',
+        'SD_NegativeTargetings',
+        'SD_NegativeExpressions',
+      ],
+      Campaigns: {
+        primaryKey: 'name',
+        columns: [
+          'Name',
+          'Budget',
+          'BudgetType',
+          'StartDate',
+          'EndDate',
+          'CostType',
+          'State',
+          'PortfolioId',
+          'Tactic',
+        ],
+        relations: {
+          SD_AdGroups: {
+            propName: 'adGroups',
+            many: true,
+          },
+          SD_ProductAds: {
+            propName: 'productAds',
+            many: true,
+          },
+          SD_Targetings: {
+            propName: 'targetings',
+            many: true,
+          },
+          SD_NegativeTargetings: {
+            propName: 'negativeTargetings',
+            many: true,
+          },
+        },
+        mutators: {
+          setBudgetAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      AdGroups: {
+        foreignKey: 'campaignName',
+        columns: ['CampaignName', 'Name', 'DefaultBid', 'State', 'Tactic'],
+        mutators: {
+          setDefaultBidAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      ProductAds: {
+        foreignKey: 'campaignName',
+        columns: ['CampaignName', 'State', 'AdGroupName', 'Asin', 'Sku'],
+        mutators: {},
+      },
+      Targetings: {
+        primaryKey: 'name',
+        removePrimaryKey: true,
+        foreignKey: 'campaignName',
+        columns: [
+          'CampaignName',
+          'Name',
+          'State',
+          'Bid',
+          'AdGroupName',
+          'ExpressionType',
+        ],
+        relations: {
+          SD_Expressions: {
+            propName: 'expression',
+            many: true,
+          },
+        },
+        mutators: {
+          setBidAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      Expressions: {
+        primaryKey: 'name',
+        removePrimaryKey: true,
+        foreignKey: 'targetingName',
+        columns: ['TargetingName', 'Name', 'Type', 'Value'],
+        relations: {
+          SD_ExpressionsNested: {
+            propName: 'value',
+            many: true,
+          },
+        },
+        mutators: {},
+      },
+      ExpressionsNested: {
+        foreignKey: 'expressionName',
+        columns: ['ExpressionName', 'Type', 'Value'],
+        mutators: {},
+      },
+      NegativeTargetings: {
+        primaryKey: 'name',
+        removePrimaryKey: true,
+        foreignKey: 'campaignName',
+        columns: ['CampaignName', 'Name'],
+        relations: {
+          SD_NegativeExpressions: {
+            propName: 'expression',
+            many: true,
+          },
+        },
+        mutators: {},
+      },
+      NegativeExpressions: {
+        foreignKey: 'negativeTargetingName',
+        columns: ['NegativeTargetingName', 'Type', 'Value'],
         mutators: {},
       },
     },
@@ -233,7 +539,8 @@ class Schema {
 
   validateSheetNames(inputSheetNames: string[]) {
     const schemaSheetNames = this.schema[this.sponsoredType].sheetNames;
-    if (inputSheetNames.length !== schemaSheetNames.length) return false;
+    if (inputSheetNames.length !== schemaSheetNames.length)
+      throw Error('Sheet count does not match.');
 
     for (let i = 0; i < schemaSheetNames.length; i++) {
       if (inputSheetNames[i] !== schemaSheetNames[i])
@@ -252,41 +559,29 @@ class Schema {
   }
 }
 
-enum SBK {
-  SBK_Campaigns,
-  SBK_Creatives,
-  SBK_LandingPages,
-  SBK_Keywords,
-  SBK_NegativeKeywords,
-}
-
-enum SBE {
-  SBE_Campaigns,
-  SBE_Creatives,
-  SBE_LandingPages,
-  SBE_Targets,
-  SBE_Expressions,
-  SBE_NegativeTargets,
-}
-
 export class AmazonAdvertisingPayload {
-  constructor(workbook: any, public sheetNames: string[]) {
-    const type = this.sheetNames[0].split('_')[0];
-    const reverseSheetNames = [...this.sheetNames].reverse();
+  schema: any;
 
-    const schema = new Schema(type);
-    schema.validateSheetNames(sheetNames);
+  constructor(public workbook: any, public sheetNames: string[]) {
+    const entityType = this.sheetNames[0].split('_')[0];
+    this.schema = new Schema(entityType);
+    this.schema.validateSheetNames(sheetNames);
 
-    this.sheetNames.forEach((sheetName) => (this[sheetName] = {}));
+    this.populateProperties();
+    this.buildRelations();
+  }
 
+  populateProperties() {
     this.sheetNames.forEach(
       (sheetName) =>
-        (this[sheetName] = workbook[SBE[sheetName]].map(
-          (entity: any) => new Entity(entity, SBE[SBE[sheetName]], schema)
-        ))
+        (this[sheetName] = this.workbook[
+          this.sheetNames.findIndex((name) => name === sheetName)
+        ].map((entity: any) => new Entity(entity, sheetName, this.schema)))
     );
+  }
 
-    console.log(this['SBE_Targets'][0].getAttributes());
+  buildRelations() {
+    const reverseSheetNames = [...this.sheetNames].reverse();
 
     reverseSheetNames.forEach((sheetName: any) => {
       this[sheetName].forEach((entityElement: any) => {
@@ -296,13 +591,10 @@ export class AmazonAdvertisingPayload {
 
         if (!relations) return;
 
-        const relationKeys = Object.keys(relations);
-
-        relationKeys.forEach((relationKey: any) => {
+        Object.keys(relations).forEach((relation: any) => {
           entityElement.setRelationAttributes(
-            relations[relationKey].propName,
-            this[relationKey],
-            relations[relationKey].many
+            relations[relation],
+            this[relation]
           );
         });
       });
@@ -316,8 +608,15 @@ export class AmazonAdvertisingPayload {
 
   stringifyPayload() {
     const rootSheet = this.sheetNames[0];
-    // this[rootSheet].map((campaign) => console.log(campaign.getAttributes()));
-    console.log('CAMPAIGN', this['SBE_Campaigns'][0].getAttributes());
+    // this[rootSheet].map((campaign) =>
+    //   console.log(campaign.getAttributes().targetings[0].expression)
+    // );
+
+    console.log(this['SD_Campaigns'][5].getAttributes());
+    // console.log(
+    //   'CAMPAIGN',
+    //   this['SBE_Campaigns'][1].getAttributes().negativeTargets[0]
+    // );
     // console.log('EXPRESSIONS', this['SBE_Expressions']);
   }
 }
@@ -340,30 +639,33 @@ class Entity {
     this.attributes[lowercaseFirst(key)] = mutator ? mutator(value) : value;
   }
 
-  setRelationAttributes(key: string, values: any[], many: boolean) {
+  setRelationAttributes(relation: any, values: any[]) {
+    const removePrimaryKey = this.schema.getEntity(
+      this.currentEntity
+    ).removePrimaryKey;
+    const primaryKey = this.schema.getEntity(this.currentEntity).primaryKey;
+
     const filtered = values.filter((value: any) => {
-      this.schema.get;
-      const primaryKey = this.schema.getEntity(this.currentEntity).primaryKey;
       const foreignKey = this.schema.getEntity(value.currentEntity).foreignKey;
-      const removePrimaryKey = this.schema.getEntity(
-        this.currentEntity
-      ).removePrimaryKey;
 
       if (this.attributes[primaryKey] === value.getAttributes()[foreignKey]) {
         value.removeAttribute(foreignKey);
-
-        if (removePrimaryKey) {
-          this.removeAttribute(primaryKey);
-        }
         return true;
       }
 
       return false;
     });
 
-    this.attributes[key] = many
-      ? filtered.map((obj) => obj.getAttributes())
-      : filtered[0].getAttributes();
+    if (removePrimaryKey) {
+      this.removeAttribute(primaryKey);
+    }
+
+    // Check to see if a value already exist in the prop, if not, then add it.
+    if (!this.attributes[relation.propName]) {
+      this.attributes[relation.propName] = relation.many
+        ? filtered.map((obj) => obj.getAttributes())
+        : filtered[0].getAttributes();
+    }
 
     return this;
   }
