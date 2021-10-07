@@ -9,9 +9,11 @@ import {
   SBVK_WORKBOOK,
   SD_SHEETNAMES,
   SD_WORKBOOK,
+  SP_SHEETNAMES,
+  SP_WORKBOOK,
 } from './demoWorkbook';
 
 import { AmazonAdvertisingPayload } from './Payload_2';
 
-new AmazonAdvertisingPayload(SD_WORKBOOK, SD_SHEETNAMES).stringifyPayload();
-// new AmazonAdvertisingPayload(SBK_WORKBOOK, SBK_SHEETNAMES).stringifyPayload();
+new AmazonAdvertisingPayload(SP_WORKBOOK, SP_SHEETNAMES).stringifyPayload();
+// .exportToFile();

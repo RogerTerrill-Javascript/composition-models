@@ -1,4 +1,5 @@
 import { lowercaseFirst } from './utils';
+import fs from 'fs';
 
 class Schema {
   schema: any = {
@@ -513,6 +514,221 @@ class Schema {
         mutators: {},
       },
     },
+    SP: {
+      sheetNames: [
+        'SP_Campaigns',
+        'SP_Biddings',
+        'SP_Adjustments',
+        'SP_AdGroups',
+        'SP_Keywords',
+        'SP_NegativeKeywords',
+        'SP_ProductAds',
+        'SP_ProductTargets',
+        'SP_Expressions',
+        'SP_ResolvedExpressions',
+        'SP_NegativeProductTargets',
+        'SP_NegativeExpressions',
+        'SP_CampaignNegativeKeywords',
+      ],
+      Campaigns: {
+        primaryKey: 'name',
+        columns: [
+          'Name',
+          'PortfolioName',
+          'CampaignType',
+          'TargetingType',
+          'State',
+          'DailyBudget',
+          'StartDate',
+          'EndDate',
+          'PremiumBidAdjustment',
+        ],
+        relations: {
+          SP_Biddings: {
+            propName: 'bidding',
+            many: false,
+          },
+          SP_AdGroups: {
+            propName: 'adGroups',
+            many: true,
+          },
+          SP_Keywords: {
+            propName: 'keywords',
+            many: true,
+          },
+          SP_NegativeKeywords: {
+            propName: 'negativeKeywords',
+            many: true,
+          },
+          SP_ProductAds: {
+            propName: 'productAds',
+            many: true,
+          },
+          SP_ProductTargets: {
+            propName: 'productTargets',
+            many: true,
+          },
+          SP_NegativeProductTargets: {
+            propName: 'negativeProductTargets',
+            many: true,
+          },
+          SP_CampaignNegativeKeywords: {
+            propName: 'campaignNegativeKeywords',
+            many: true,
+          },
+        },
+        mutators: {
+          setDailyBudgetAttribute(value: string) {
+            return parseFloat(value);
+          },
+          setPremiumBidAdjustment(value: string) {
+            return value === 'true';
+          },
+        },
+      },
+      Biddings: {
+        foreignKey: 'CampaignName',
+        primaryKey: 'name',
+        removePrimaryKey: true,
+        columns: ['Name', 'CampaignName', 'Strategy'],
+        relations: {
+          SP_Adjustments: {
+            propName: 'adjustments',
+            many: true,
+          },
+        },
+        mutators: {},
+      },
+      Adjustments: {
+        foreignKey: 'BiddingName',
+        columns: ['BiddingName', 'Predicate', 'Percentage'],
+        mutators: {
+          setPercentageAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      AdGroups: {
+        primaryKey: 'Name',
+        foreignKey: 'CampaignName',
+        columns: ['CampaignName', 'Name', 'DefaultBid', 'State'],
+        relations: {},
+        mutators: {
+          setDefaultBidAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      Keywords: {
+        foreignKey: 'CampaignName',
+        columns: [
+          'CampaignName',
+          'AdGroupName',
+          'State',
+          'KeywordText',
+          'NativeLanguageKeyword',
+          'NativeLanguageLocale',
+          'MatchType',
+          'Bid',
+        ],
+        relations: {},
+        mutators: {
+          setDefaultBidAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      NegativeKeywords: {
+        foreignKey: 'CampaignName',
+        columns: [
+          'CampaignName',
+          'AdGroupName',
+          'State',
+          'KeywordText',
+          'MatchType',
+        ],
+        mutators: {},
+      },
+      ProductAds: {
+        foreignKey: 'CampaignName',
+        columns: ['CampaignName', 'AdGroupName', 'Sku', 'Asin', 'State'],
+        relations: {},
+        mutators: {},
+      },
+      ProductTargets: {
+        foreignKey: 'CampaignName',
+        primaryKey: 'Name',
+        removePrimaryKey: true,
+        columns: [
+          'CampaignName',
+          'Name',
+          'AdGroupName',
+          'State',
+          'ExpressionType',
+          'Bid',
+        ],
+        relations: {
+          SP_Expressions: {
+            propName: 'expression',
+            many: true,
+          },
+          SP_ResolvedExpressions: {
+            propName: 'resolvedExpression',
+            many: true,
+          },
+        },
+        mutators: {
+          setDefaultBidAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      Expressions: {
+        foreignKey: 'ProductTargetName',
+        preservePrimaryKey: true,
+        columns: ['ProductTargetName', 'Value', 'Type'],
+        mutators: {},
+      },
+      ResolvedExpressions: {
+        foreignKey: 'ProductTargetName',
+        columns: ['ProductTargetName', 'Value', 'Type'],
+        mutators: {},
+      },
+      NegativeProductTargets: {
+        foreignKey: 'CampaignName',
+        primaryKey: 'Name',
+        removePrimaryKey: true,
+        columns: [
+          'CampaignName',
+          'Name',
+          'AdGroupName',
+          'State',
+          'ExpressionType',
+          'Bid',
+        ],
+        relations: {
+          SP_NegativeExpressions: {
+            propName: 'expression',
+            many: true,
+          },
+        },
+        mutators: {
+          setBidAttribute(value: string) {
+            return parseFloat(value);
+          },
+        },
+      },
+      NegativeExpressions: {
+        foreignKey: 'NegativeProductTargetName',
+        columns: ['NegativeProductTargetName', 'Value', 'Type'],
+        mutators: {},
+      },
+      CampaignNegativeKeywords: {
+        foreignKey: 'CampaignName',
+        columns: ['CampaignName', 'State', 'KeywordText', 'MatchType'],
+        mutators: {},
+      },
+    },
   };
 
   constructor(public sponsoredType: string) {}
@@ -526,11 +742,23 @@ class Schema {
   }
 
   getPrimaryKey(entity: string) {
-    return this.schema[this.sponsoredType][entity].primaryKey;
+    return lowercaseFirst(this.schema[this.sponsoredType][entity].primaryKey);
+  }
+
+  getRemovePrimaryKey(entity: string) {
+    return this.schema[this.sponsoredType][entity].removePrimaryKey;
+  }
+
+  setRemovePrimaryKey(entity: string, bool: boolean) {
+    this.schema[this.sponsoredType][entity].removePrimaryKey = bool;
+  }
+
+  getPerservePrimaryKey(entity) {
+    return this.schema[this.sponsoredType][entity].preservePrimaryKey;
   }
 
   getForeignKey(entity: string) {
-    return this.schema[this.sponsoredType][entity].foreignKey;
+    return lowercaseFirst(this.schema[this.sponsoredType][entity].foreignKey);
   }
 
   getRelations(entity: string) {
@@ -612,12 +840,18 @@ export class AmazonAdvertisingPayload {
     //   console.log(campaign.getAttributes().targetings[0].expression)
     // );
 
-    console.log(this['SD_Campaigns'][5].getAttributes());
+    console.log(this['SP_Campaigns'][0].getAttributes());
     // console.log(
     //   'CAMPAIGN',
     //   this['SBE_Campaigns'][1].getAttributes().negativeTargets[0]
     // );
     // console.log('EXPRESSIONS', this['SBE_Expressions']);
+    return this;
+  }
+
+  exportToFile() {
+    const str = JSON.stringify(this['SP_Campaigns'][0].getAttributes());
+    fs.writeFile('payload.json', str, () => console.log('passed'));
   }
 }
 
@@ -640,13 +874,21 @@ class Entity {
   }
 
   setRelationAttributes(relation: any, values: any[]) {
-    const removePrimaryKey = this.schema.getEntity(
+    let removePrimaryKey = this.schema.getEntity(
       this.currentEntity
     ).removePrimaryKey;
-    const primaryKey = this.schema.getEntity(this.currentEntity).primaryKey;
+    const primaryKey = this.schema.getPrimaryKey(this.currentEntity);
 
     const filtered = values.filter((value: any) => {
-      const foreignKey = this.schema.getEntity(value.currentEntity).foreignKey;
+      const foreignKey = this.schema.getForeignKey(value.currentEntity);
+      const perservePrimaryKey = this.schema.getPerservePrimaryKey(
+        value.currentEntity
+      );
+
+      // Override to preserve primary key for another entity
+      if (perservePrimaryKey) {
+        removePrimaryKey = false;
+      }
 
       if (this.attributes[primaryKey] === value.getAttributes()[foreignKey]) {
         value.removeAttribute(foreignKey);
